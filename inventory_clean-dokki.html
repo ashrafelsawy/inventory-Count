@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OurKids Inventory</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--blue:#2B5FAC;--blue-dark:#1e4a8a;--red:#E63329;--yellow:#F5A623;--bg:#f0f4fa;--white:#fff;--text:#1a1a2e;--text2:#666;--border:#dde3ef;--green:#1D9E75}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.page{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.page.hidden{display:none!important}
+#pg-act,#pg-login{background:linear-gradient(135deg,var(--blue),var(--blue-dark))}
+.box{background:#fff;border-radius:20px;padding:36px 32px;width:360px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.box-ico{text-align:center;font-size:52px;margin-bottom:8px}
+.box-title{text-align:center;font-size:22px;font-weight:900;color:var(--blue);margin-bottom:4px}
+.box-sub{text-align:center;font-size:13px;color:var(--text2);margin-bottom:22px}
+.lbl{display:block;font-size:13px;font-weight:700;color:var(--text2);margin:12px 0 5px}
+.inp{width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);font-size:15px;font-family:inherit}
+.inp:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,95,172,.12)}
+.btn-main{width:100%;padding:13px;margin-top:16px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
+.err{color:var(--red);font-size:12px;font-weight:700;margin-top:8px;min-height:18px}
+.hint{text-align:center;font-size:11px;color:#aaa;margin-top:14px}
+#pg-app{position:fixed;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column}
+nav{background:linear-gradient(135deg,var(--blue),var(--blue-dark));height:60px;display:flex;align-items:center;padding:0 14px;gap:0;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.nlogo{display:flex;align-items:center;gap:10px;flex:1}
+.nlogo-ico{width:36px;height:36px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0}
+.nlogo-ico img{width:100%;height:100%;object-fit:contain}
+.ntxt{line-height:1.2}
+.ntxt b{font-size:15px;color:#fff;display:block}
+.ntxt small{font-size:11px;color:rgba(255,255,255,.7)}
+.tbtn{height:60px;padding:0 14px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-size:14px;font-family:inherit;color:rgba(255,255,255,.7);font-weight:600;white-space:nowrap}
+.tbtn.on{color:#fff;border-bottom-color:var(--yellow);font-weight:800}
+.nuser{font-size:12px;color:rgba(255,255,255,.85);font-weight:700;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px;margin:0 6px}
+.lout{padding:5px 12px;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;background:none;cursor:pointer;font-size:12px;color:#fff;font-family:inherit;font-weight:600}
+.body{flex:1;overflow-y:auto;padding:16px;max-width:1200px;margin:0 auto;width:100%}
+.screen{display:none}
+.screen.on{display:block}
+.ptitle{font-size:24px;font-weight:900;color:var(--blue);margin-bottom:16px}
+.card{background:#fff;border-radius:12px;border:1.5px solid var(--border);padding:18px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.card-ok{border:2px solid var(--green);background:#f0fdf8}
+.card-err{border:2px solid var(--red);background:#fff5f5}
+.sir{display:flex;gap:8px;margin-bottom:14px}
+.sir input{flex:1;padding:13px 15px;font-size:18px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit}
+.sir input:focus{outline:none;border-color:var(--blue)}
+.btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit}
+.btn-p{background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;padding:13px 20px;font-size:15px}
+.btn-g{background:linear-gradient(135deg,var(--green),#157a5c);color:#fff}
+.btn-b{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
+.btn-r{background:linear-gradient(135deg,var(--red),#c42820);color:#fff}
+.btn-gr{background:#eee;color:#444}
+.okbar{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.oktext{font-weight:800;color:var(--green);font-size:20px}
+.sf{margin-bottom:14px}
+.s2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.slbl{font-size:11px;color:var(--text2);font-weight:800;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.scode{font-size:36px;font-weight:900;word-break:break-all;color:var(--blue)}
+.sname{font-size:40px;font-weight:900;line-height:1.15}
+.sprice{font-size:60px;font-weight:900;color:var(--red);line-height:1}
+.ssupp{font-size:26px;font-weight:700;color:var(--text2)}
+.empty{text-align:center;padding:50px 20px}
+.empty .ei{font-size:48px;margin-bottom:10px}
+.empty .el{color:var(--text2);font-size:16px;font-weight:700}
+.empty .ec{color:#aaa;font-size:13px;margin-top:6px}
+.spanel{background:#fff;border-radius:12px;border:2px solid var(--blue);padding:16px;margin-bottom:14px}
+.spanel h3{font-size:16px;font-weight:800;color:var(--blue);margin-bottom:10px}
+.spanel input{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;font-family:inherit;margin-bottom:10px}
+.spanel input:focus{outline:none;border-color:var(--blue)}
+.sres{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px}
+.sri{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.sri:hover{background:#eef2fb}
+.sri-n{font-size:15px;font-weight:800}
+.sri-s{font-size:12px;color:var(--text2);margin-top:2px}
+.sri-p{font-size:17px;font-weight:900;color:var(--red);float:right}
+.nr{padding:16px;text-align:center;color:#aaa;font-size:14px}
+.mpanel{background:#fff;border-radius:12px;border:2px solid var(--green);padding:18px;margin-bottom:14px}
+.mpanel h3{font-size:16px;font-weight:800;color:var(--green);margin-bottom:14px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ml{font-size:11px;color:var(--text2);font-weight:700;margin-bottom:3px}
+.mv{font-size:18px;font-weight:800}
+.mqr{display:flex;gap:8px;align-items:center}
+.mqr input{width:150px;padding:10px 12px;font-size:20px;border-radius:8px;border:2px solid var(--border);font-family:inherit;font-weight:700}
+.mqr input:focus{outline:none;border-color:var(--green)}
+.tbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.tbar input{flex:1;min-width:150px;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border);font-size:14px;font-family:inherit}
+.tbar input:focus{outline:none;border-color:var(--blue)}
+.sok{color:var(--green);font-size:13px;font-weight:700}
+.serr{color:var(--red);font-size:13px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.sc{border-radius:14px;padding:18px 20px;box-shadow:0 3px 12px rgba(0,0,0,.1);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;right:-16px;bottom:-16px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.12)}
+.sc .sl{font-size:13px;font-weight:700;margin-bottom:8px;color:rgba(255,255,255,.85)}
+.sc .sv{font-size:46px;font-weight:900;line-height:1;color:#fff}
+.sc-1{background:linear-gradient(135deg,var(--blue),var(--blue-dark))}
+.sc-2{background:linear-gradient(135deg,var(--green),#157a5c)}
+.sc-3{background:linear-gradient(135deg,var(--red),#c42820)}
+.sc-4{background:linear-gradient(135deg,#7c3aed,#5b21b6)}
+.sc-5{background:linear-gradient(135deg,var(--yellow),#d97706)}
+.sc-6{background:linear-gradient(135deg,#0891b2,#0e7490)}
+.tw{border-radius:12px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.ts{overflow-y:auto;overflow-x:auto;max-height:560px}
+table{width:100%;border-collapse:collapse;font-size:15px;background:#fff;table-layout:fixed}
+thead tr{background:linear-gradient(135deg,var(--blue),var(--blue-dark));position:sticky;top:0;z-index:5}
+th{padding:13px 11px;text-align:left;font-weight:800;font-size:14px;color:#fff;white-space:nowrap}
+td{padding:11px;border-bottom:1px solid var(--border);color:var(--text);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:nth-child(even) td{background:#f7f9fd}
+tr:hover td{background:#eef2fb}
+.vsp td{border:none!important;background:transparent!important;padding:0!important}
+.dp{color:var(--green);font-weight:800}
+.dn{color:var(--red);font-weight:800}
+.af{color:var(--green);font-weight:700}
+.ae{color:#bbb}
+.scan-card{border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);margin-bottom:14px}
+.scan-card-header{background:linear-gradient(135deg,var(--green),#157a5c);padding:14px 20px;display:flex;align-items:center;gap:12px}
+.scan-check{font-size:26px}
+.scan-added{font-size:18px;font-weight:800;color:#fff;flex:1}
+.scan-total{font-size:15px;color:rgba(255,255,255,.85);font-weight:600}
+.scan-total strong{font-size:22px;color:#fff;font-weight:900}
+.scan-card-body{background:#fff;border:1.5px solid #d1fae5;border-top:none;border-radius:0 0 16px 16px;padding:18px 20px}
+.sc-top-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:16px}
+.sc-row{margin-bottom:14px}
+.sc-info-grid{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-top:14px;border-top:1.5px solid #e8f5e9}
+.sc-info-item{background:#f8faff;border-radius:10px;padding:10px 14px;border:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.sc-info-item .scan-field-lbl{min-width:110px;margin-bottom:0;flex-shrink:0}
+.sc-info-val{font-size:16px;font-weight:800;color:var(--text)}
+.sc-info-item{background:#f8faff;border-radius:10px;padding:10px 14px;border:1px solid var(--border)}
+.sc-info-val{font-size:16px;font-weight:800;margin-top:3px;color:var(--text)}
+.badge-blue-val{color:var(--blue)}
+.badge-purple-val{color:#7c3aed}
+.badge-orange-val{color:#d97706}
+.sc-row:last-child{margin-bottom:0}
+.scan-field-lbl{font-size:10px;font-weight:800;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.scan-field-code{font-size:34px;font-weight:900;color:var(--blue);word-break:break-all;line-height:1.1}
+.scan-field-price{font-size:48px;font-weight:900;color:var(--red);line-height:1}
+.scan-field-name{font-size:36px;font-weight:900;line-height:1.15;color:var(--text)}
+.scan-field-supp{font-size:20px;font-weight:700;color:var(--text2)}
+.scan-badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{padding:6px 14px;border-radius:20px;font-size:14px;font-weight:800;white-space:nowrap}
+.badge-blue{background:#eef2fb;color:var(--blue);border:1.5px solid #c7d7f5}
+.badge-purple{background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe}
+.badge-orange{background:#fff7ed;color:#d97706;border:1.5px solid #fde68a}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:18px}
+.ucard{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:10px}
+.uav{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex-shrink:0;color:#fff}
+.uav-a{background:linear-gradient(135deg,var(--blue),var(--blue-dark))}
+.uav-s{background:linear-gradient(135deg,var(--green),#157a5c)}
+.uinfo{flex:1}
+.uname{font-size:15px;font-weight:800}
+.urole{font-size:12px;font-weight:700;margin-top:2px}
+.ur-a{color:var(--blue)}
+.ur-s{color:var(--green)}
+.udel{background:none;border:none;cursor:pointer;color:var(--red);font-size:17px;padding:4px 6px;border-radius:6px}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.agrid input{padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;font-family:inherit}
+.agrid input:focus{outline:none;border-color:var(--blue)}
+.rsel{display:flex;gap:8px;margin-top:6px}
+.ropt{flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:#fafafa;cursor:pointer;text-align:center;font-weight:700;font-size:13px}
+.ropt.ra{border-color:var(--blue);background:#eef2fb;color:var(--blue)}
+.ropt.rs{border-color:var(--green);background:#f0fdf8;color:var(--green)}
+.logo-box{width:110px;height:110px;border-radius:14px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:38px;margin-bottom:10px;background:#f7f9fd;cursor:pointer;overflow:hidden}
+.logo-box img{width:100%;height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+
+<!-- ACTIVATION -->
+<div id="pg-act" class="page">
+  <div class="box">
+    <div class="box-ico">🔐</div>
+    <div class="box-title">Device Activation</div>
+    <div class="box-sub">Enter your activation code to unlock this device</div>
+    <span class="lbl">Activation Code</span>
+    <input class="inp" type="password" id="act-inp" placeholder="••••••••••" style="text-align:center;letter-spacing:3px;font-size:18px" autocomplete="off">
+    <div id="act-err" class="err"></div>
+    <button class="btn-main" id="act-btn">🔓 Activate</button>
+    <div class="hint">Contact your administrator for an activation code</div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="pg-login" class="page hidden">
+  <div class="box">
+    <div id="login-logo" style="text-align:center;margin-bottom:8px"><div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--red));display:inline-flex;align-items:center;justify-content:center;font-size:36px" id="login-ico">🛍️</div></div>
+    <div class="box-title" id="login-name">OurKids</div>
+    <div class="box-sub" id="login-sub">Branch Inventory System</div>
+    <span class="lbl">Username</span>
+    <input class="inp" type="text" id="inp-u" placeholder="Enter username" autocomplete="off">
+    <span class="lbl">Password</span>
+    <input class="inp" type="password" id="inp-p" placeholder="••••••" autocomplete="new-password">
+    <div id="lerr" class="err"></div>
+    <button class="btn-main" id="login-btn">Login</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pg-app">
+  <nav>
+    <div class="nlogo">
+      <div class="nlogo-ico" id="nav-ico">🛍️</div>
+      <div class="ntxt"><b id="nav-name">OurKids</b><small id="nav-sub">Branch Inventory</small></div>
+    </div>
+    <button class="tbtn on" id="tab-scan" onclick="goTab('scan')">Scan</button>
+    <button class="tbtn" id="tab-master" onclick="goTab('master')" style="display:none">Master Data</button>
+    <button class="tbtn" id="tab-report" onclick="goTab('report')" style="display:none">Report</button>
+    <button class="tbtn" id="tab-admin" onclick="goTab('admin')" style="display:none">⚙️ Admin</button>
+    <span class="nuser" id="nav-u"></span>
+    <button class="lout" id="logout-btn">Logout</button>
+  </nav>
+  <div class="body">
+
+    <div id="sc-scan" class="screen on">
+      <div class="ptitle">🔍 Scan Products</div>
+      <div class="sir">
+        <input type="text" id="scan-inp" placeholder="Scan barcode or enter code...">
+        <button class="btn btn-p" id="scan-btn">Scan</button>
+        <button class="btn btn-gr" id="srch-btn">🔎 Search</button>
+      </div>
+      <div id="srch-panel" class="spanel" style="display:none">
+        <h3>🔎 Product Search</h3>
+        <input type="text" id="srch-inp" placeholder="Search by name, code or supplier...">
+        <div class="sres" id="srch-list"></div>
+      </div>
+      <div id="man-panel" class="mpanel" style="display:none">
+        <h3>Manual Count</h3>
+        <div class="mgrid" id="man-info"></div>
+        <div class="mqr">
+          <input type="number" id="man-qty" min="1" value="1">
+          <button class="btn btn-g" id="man-ok">✓ Confirm</button>
+          <button class="btn btn-gr" id="man-cancel">Cancel</button>
+        </div>
+      </div>
+      <div id="scan-result"></div>
+      <div id="scan-empty" class="card empty"><div class="ei">🔍</div><div class="el">Waiting for scan...</div><div class="ec" id="scan-cnt">Scanned: 0 items</div></div>
+    </div>
+
+    <div id="sc-master" class="screen">
+      <div class="ptitle">📋 Master Data</div>
+      <div class="tbar">
+        <input type="text" id="msr-inp" placeholder="Search by code, name or supplier...">
+        <button class="btn btn-g" id="imp-btn">⬆ Import Excel</button>
+        <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" style="display:none">
+        <span id="imp-st"></span>
+      </div>
+      <div class="tw"><div class="ts" id="msr-scroll">
+        <table><thead><tr><th style="width:150px">Code</th><th style="width:150px">SKU</th><th>Product Name</th><th style="width:110px">Vendor Color</th><th style="width:80px">Season</th><th style="width:110px">Supplier</th><th style="width:80px">Price</th><th style="width:110px">Book Balance</th><th style="width:120px">Actual Inventory</th></tr></thead>
+        <tbody id="msr-body"></tbody></table>
+      </div></div>
+      <div class="fn" id="msr-foot"></div>
+    </div>
+
+    <div id="sc-report" class="screen">
+      <div class="ptitle">📊 Inventory Report</div>
+      <div class="tbar">
+        <input type="text" id="rpt-inp" placeholder="Search...">
+        <button class="btn btn-b" id="exp-btn">⬇ Export Excel</button>
+      </div>
+      <div class="stats">
+        <div class="sc sc-1"><div class="sl">Total Products</div><div class="sv" id="st-total">0</div></div>
+        <div class="sc sc-2"><div class="sl">Counted</div><div class="sv" id="st-done">0</div></div>
+        <div class="sc sc-3"><div class="sl">Not Counted</div><div class="sv" id="st-rem">0</div></div>
+        <div class="sc sc-4"><div class="sl">Total Qty Counted</div><div class="sv" id="st-qty">0</div></div>
+        <div class="sc sc-5"><div class="sl">Total Book Balance</div><div class="sv" id="st-book">0</div></div>
+        <div class="sc sc-6"><div class="sl">Total Difference</div><div class="sv" id="st-diff">0</div></div>
+      </div>
+      <div class="tw"><div class="ts" id="rpt-scroll">
+        <table><thead><tr><th style="width:150px">Code</th><th style="width:80px">SKU</th><th>Product Name</th><th style="width:110px">Vendor Color</th><th style="width:90px">Season</th><th style="width:110px">Supplier</th><th style="width:80px">Price</th><th style="width:110px">Book Balance</th><th style="width:110px">Qty Counted</th><th style="width:100px">Difference</th></tr></thead>
+        <tbody id="rpt-body"></tbody></table>
+      </div></div>
+    </div>
+
+    <div id="sc-admin" class="screen">
+      <div class="ptitle">⚙️ Admin Settings</div>
+      <div class="card" style="margin-bottom:18px">
+        <h3 style="font-size:17px;font-weight:800;color:var(--blue);margin-bottom:16px">🎨 Branding</h3>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start">
+          <div>
+            <div class="logo-box" id="logo-preview" onclick="document.getElementById('logo-file').click()">🛍️</div>
+            <input type="file" id="logo-file" accept="image/*" style="display:none">
+            <button class="btn btn-gr" style="font-size:12px;padding:5px 12px;display:block;margin-bottom:6px" onclick="document.getElementById('logo-file').click()">Upload Logo</button>
+            <button class="btn btn-r" style="font-size:12px;padding:5px 12px;display:block" id="logo-reset">Reset Logo</button>
+          </div>
+          <div>
+            <span class="lbl">Company Name</span>
+            <input class="inp" type="text" id="br-name" placeholder="OurKids" style="margin-bottom:10px">
+            <span class="lbl">Subtitle</span>
+            <input class="inp" type="text" id="br-sub" placeholder="Branch Inventory" style="margin-bottom:14px">
+            <button class="btn btn-p" id="br-save" style="padding:9px 22px">💾 Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <h3 style="font-size:17px;font-weight:800;color:var(--blue);margin-bottom:14px">👥 Users</h3>
+        <div class="ugrid" id="users-list"></div>
+        <div style="border-top:1.5px solid var(--border);padding-top:14px">
+          <h4 style="font-size:14px;font-weight:800;color:var(--blue);margin-bottom:12px">➕ Add User</h4>
+          <div class="agrid">
+            <div><span class="lbl">Username</span><input class="inp" type="text" id="nu-name" autocomplete="off"></div>
+            <div><span class="lbl">Password</span><input class="inp" type="password" id="nu-pass" autocomplete="new-password"></div>
+          </div>
+          <span class="lbl">Role</span>
+          <div class="rsel"><div class="ropt" id="ro-admin" onclick="setRole('admin')">🔑 Admin</div><div class="ropt" id="ro-scanner" onclick="setRole('scanner')">📷 Scanner</div></div>
+          <div id="nu-err" class="err"></div>
+          <button class="btn btn-p" style="margin-top:12px;padding:9px 22px" id="nu-add">Add User</button>
+        </div>
+      </div>
+      <div class="card" style="border:2px solid #fecaca">
+        <h3 style="font-size:17px;font-weight:800;color:var(--red);margin-bottom:8px">⚠️ Danger Zone</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Reset all actual inventory counts to zero.</p>
+        <button class="btn btn-r" id="reset-btn">🔄 Reset Inventory</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var MASTER_KEY="OURKIDS-2025-SECURE";
+var DB={
+  products:[
+    {code:"P001",name:"Tea Biscuits",supplier:"Al-Farah",price:"5.50",bookBalance:"200",actualInventory:""},
+    {code:"P002",name:"Orange Juice 1L",supplier:"Juhayna",price:"12.00",bookBalance:"150",actualInventory:""},
+    {code:"P003",name:"Corn Oil 1.5L",supplier:"Areedge",price:"48.00",bookBalance:"80",actualInventory:""},
+    {code:"P004",name:"White Rice 2kg",supplier:"Nile Co.",price:"35.00",bookBalance:"120",actualInventory:""}
+  ],
+  users:[
+    {id:1,  username:"admin",        password:"admin123",  role:"admin",   branch:"",      hand:""},
+    {id:2,  username:"scanner",      password:"scan123",   role:"scanner", branch:"",      hand:""},
+    {id:3,  username:"dokki-hand1",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"1"},
+    {id:4,  username:"dokki-hand2",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"2"},
+    {id:5,  username:"dokki-hand3",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"3"},
+    {id:6,  username:"dokki-hand4",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"4"},
+    {id:7,  username:"dokki-hand5",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"5"},
+    {id:8,  username:"dokki-hand6",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"6"},
+    {id:9,  username:"dokki-hand7",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"7"},
+    {id:10, username:"dokki-hand8",  password:"dokki123",  role:"scanner", branch:"Dokki", hand:"8"},
+  ],
+  nextId:3,scanCount:0
+};
+var BRAND={logo:null,name:"OurKids",sub:"Branch Inventory"};
+var CU=null,manProd=null,srchOpen=false,selRole="scanner";
+var ROW_H=46,VISIBLE=25,mF=[],rF=[];
+
+function x(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function beep(){try{var c=new(window.AudioContext||window.webkitAudioContext)();var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;o.type="square";g.gain.setValueAtTime(0.3,c.currentTime);g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+0.18);o.start();o.stop(c.currentTime+0.18);}catch(e){}}
+
+function showPage(id){
+  document.getElementById("pg-act").className="page hidden";
+  document.getElementById("pg-login").className="page hidden";
+  document.getElementById("pg-app").style.display="none";
+  if(id==="app"){document.getElementById("pg-app").style.display="flex";}
+  else{document.getElementById("pg-"+id).className="page";}
+}
+
+function doActivate(){
+  var v=document.getElementById("act-inp").value.trim();
+  if(v===MASTER_KEY){
+    sessionStorage.setItem("ok_act","1");
+    showPage("login");
+    setTimeout(function(){document.getElementById("inp-u").focus();},100);
+  } else {
+    document.getElementById("act-err").textContent="Invalid activation code";
+    document.getElementById("act-inp").value="";
+    document.getElementById("act-inp").focus();
+  }
+}
+
+function doLogin(){
+  var u=document.getElementById("inp-u").value.trim();
+  var p=document.getElementById("inp-p").value.trim();
+  var found=null;
+  for(var i=0;i<DB.users.length;i++){if(DB.users[i].username===u&&DB.users[i].password===p){found=DB.users[i];break;}}
+  if(!found){document.getElementById("lerr").textContent="Invalid username or password";return;}
+  document.getElementById("lerr").textContent="";
+  CU=found;
+  showPage("app");
+  document.getElementById("nav-u").textContent=found.username;
+  if(found.branch){
+    document.getElementById("nav-u").textContent=found.branch+" — Hand "+found.hand;
+  }
+  if(found.role==="admin"){
+    document.getElementById("tab-master").style.display="";
+    document.getElementById("tab-report").style.display="";
+    document.getElementById("tab-admin").style.display="";
+  }
+  goTab("scan");
+}
+
+function doLogout(){
+  CU=null;srchOpen=false;
+  document.getElementById("inp-u").value="";
+  document.getElementById("inp-p").value="";
+  document.getElementById("tab-master").style.display="none";
+  document.getElementById("tab-report").style.display="none";
+  document.getElementById("tab-admin").style.display="none";
+  sessionStorage.removeItem("ok_act");
+  showPage("act");
+  setTimeout(function(){document.getElementById("act-inp").focus();},100);
+}
+
+function goTab(t){
+  var tabs=["scan","master","report","admin"];
+  for(var i=0;i<tabs.length;i++){
+    document.getElementById("sc-"+tabs[i]).className="screen"+(tabs[i]===t?" on":"");
+    var tb=document.getElementById("tab-"+tabs[i]);
+    if(tb)tb.className="tbtn"+(tabs[i]===t?" on":"");
+  }
+  if(t==="master")renderMaster();
+  if(t==="report")renderReport();
+  if(t==="admin"){renderUsers();document.getElementById("br-name").value=BRAND.name;document.getElementById("br-sub").value=BRAND.sub;}
+  if(t==="scan")setTimeout(function(){document.getElementById("scan-inp").focus();},50);
+}
+
+function applyBrand(){
+  document.getElementById("nav-name").textContent=BRAND.name;
+  document.getElementById("nav-sub").textContent=BRAND.sub;
+  document.getElementById("login-name").textContent=BRAND.name;
+  document.getElementById("login-sub").textContent=BRAND.sub;
+  if(BRAND.logo){
+    var img='<img src="'+BRAND.logo+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%">';
+    document.getElementById("nav-ico").innerHTML=img;
+    document.getElementById("login-ico").innerHTML=img;
+    document.getElementById("logo-preview").innerHTML=img;
+  } else {
+    document.getElementById("nav-ico").innerHTML="🛍️";
+    document.getElementById("login-ico").innerHTML="🛍️";
+    document.getElementById("logo-preview").innerHTML="🛍️";
+  }
+}
+
+function setRole(r){selRole=r;document.getElementById("ro-admin").className="ropt"+(r==="admin"?" ra":"");document.getElementById("ro-scanner").className="ropt"+(r==="scanner"?" rs":"");}
+
+function renderUsers(){
+  setRole(selRole);var h="";
+  for(var i=0;i<DB.users.length;i++){
+    var u=DB.users[i],me=CU&&CU.id===u.id;
+    h+="<div class='ucard'><div class='uav "+(u.role==="admin"?"uav-a":"uav-s")+"'>"+x(u.username.charAt(0).toUpperCase())+"</div>"
+      +"<div class='uinfo'><div class='uname'>"+x(u.username)+(me?" <span style='font-size:11px;color:#aaa'>(you)</span>":"")+"</div>"
+      +"<div class='urole "+(u.role==="admin"?"ur-a":"ur-s")+"'>"+(u.role==="admin"?"🔑 Admin":"📷 Scanner")+"</div></div>"
+      +(me?"":"<button class='udel' data-id='"+u.id+"'>✕</button>")+"</div>";
+  }
+  document.getElementById("users-list").innerHTML=h;
+  var d=document.getElementById("users-list").querySelectorAll(".udel");
+  for(var j=0;j<d.length;j++){d[j].onclick=function(){if(confirm("Delete user?"))for(var k=0;k<DB.users.length;k++){if(DB.users[k].id===parseInt(this.getAttribute("data-id"))){DB.users.splice(k,1);break;}}renderUsers();};}
+}
+
+function addUser(){
+  var u=document.getElementById("nu-name").value.trim(),p=document.getElementById("nu-pass").value.trim();
+  var e=document.getElementById("nu-err");
+  if(!u||!p){e.textContent="Username and password required";return;}
+  for(var i=0;i<DB.users.length;i++){if(DB.users[i].username===u){e.textContent="Username exists";return;}}
+  e.textContent="";DB.users.push({id:DB.nextId++,username:u,password:p,role:selRole});
+  document.getElementById("nu-name").value="";document.getElementById("nu-pass").value="";
+  renderUsers();
+}
+
+function toggleSearch(){
+  srchOpen=!srchOpen;
+  document.getElementById("srch-panel").style.display=srchOpen?"":"none";
+  document.getElementById("man-panel").style.display="none";manProd=null;
+  var b=document.getElementById("srch-btn");
+  b.style.background=srchOpen?"var(--blue)":"";b.style.color=srchOpen?"#fff":"";
+  if(srchOpen){document.getElementById("srch-inp").value="";renderSearch();setTimeout(function(){document.getElementById("srch-inp").focus();},50);}
+  else setTimeout(function(){document.getElementById("scan-inp").focus();},50);
+}
+
+function renderSearch(){
+  var q=document.getElementById("srch-inp").value.toLowerCase().trim(),list=document.getElementById("srch-list");
+  if(!q){list.innerHTML="<div class='nr'>Type to search...</div>";return;}
+  var res=[],i=0;
+  for(i=0;i<DB.products.length;i++){var p=DB.products[i];if((p.code||"").toLowerCase().indexOf(q)>-1||(p.name||"").toLowerCase().indexOf(q)>-1||(p.supplier||"").toLowerCase().indexOf(q)>-1){res.push(p);if(res.length>=30)break;}}
+  if(!res.length){list.innerHTML="<div class='nr'>No products found</div>";return;}
+  var h="";
+  for(var j=0;j<res.length;j++){var r=res[j];h+="<div class='sri' data-code='"+x(r.code)+"'><span class='sri-p'>"+x(r.price)+" EGP</span><div class='sri-n'>"+x(r.name)+"</div><div class='sri-s'>"+x(r.code)+" · "+x(r.supplier)+"</div></div>";}
+  list.innerHTML=h;
+  var items=list.querySelectorAll(".sri");
+  for(var k=0;k<items.length;k++){items[k].onclick=function(){selectProd(this.getAttribute("data-code"));};}
+}
+
+function selectProd(code){
+  var p=null;
+  for(var i=0;i<DB.products.length;i++){if(DB.products[i].code===code){p=DB.products[i];break;}}
+  if(!p)return;
+  manProd=p;
+  document.getElementById("srch-panel").style.display="none";
+  document.getElementById("man-panel").style.display="";
+  document.getElementById("man-info").innerHTML=
+    "<div><div class='ml'>Code</div><div class='mv'>"+x(p.code)+"</div></div>"
+    +"<div><div class='ml'>Price</div><div class='mv' style='font-size:26px;color:var(--red)'>"+x(p.price)+" EGP</div></div>"
+    +"<div><div class='ml'>Name</div><div class='mv' style='font-size:20px'>"+x(p.name)+"</div></div>"
+    +"<div><div class='ml'>Supplier</div><div class='mv' style='color:var(--text2)'>"+x(p.supplier)+"</div></div>";
+  document.getElementById("man-qty").value="1";
+  setTimeout(function(){document.getElementById("man-qty").focus();},50);
+}
+
+function confirmManual(){
+  if(!manProd)return;
+  var qty=parseInt(document.getElementById("man-qty").value)||1;
+  var p=null;
+  for(var i=0;i<DB.products.length;i++){if(DB.products[i].code===manProd.code){p=DB.products[i];break;}}
+  if(p){
+    beep();p.actualInventory=String((p.actualInventory===""?0:Number(p.actualInventory))+qty);
+    DB.scanCount++;document.getElementById("scan-cnt").textContent="Scanned: "+DB.scanCount+" operations";
+    manProd=null;document.getElementById("man-panel").style.display="none";
+    srchOpen=false;document.getElementById("srch-panel").style.display="none";
+    document.getElementById("srch-btn").style.background="";document.getElementById("srch-btn").style.color="";
+    showCard(p,qty);
+  } else cancelManual();
+}
+
+function cancelManual(){
+  manProd=null;document.getElementById("man-panel").style.display="none";
+  srchOpen=false;document.getElementById("srch-panel").style.display="none";
+  document.getElementById("srch-btn").style.background="";document.getElementById("srch-btn").style.color="";
+  setTimeout(function(){document.getElementById("scan-inp").focus();},50);
+}
+
+function doScan(){
+  var code=document.getElementById("scan-inp").value.trim();
+  if(!code)return;
+  document.getElementById("scan-inp").value="";
+  var p=null;
+  for(var i=0;i<DB.products.length;i++){if(DB.products[i].code===code){p=DB.products[i];break;}}
+  if(!p){
+    document.getElementById("scan-result").innerHTML="<div class='card card-err'><p style='color:var(--red);font-weight:800;font-size:16px;margin-bottom:10px'>❌ Not found: <strong>"+x(code)+"</strong></p><button class='btn btn-r' onclick='clearScan()'>Close</button></div>";
+    document.getElementById("scan-empty").style.display="none";return;
+  }
+  beep();p.actualInventory=String((p.actualInventory===""?0:Number(p.actualInventory))+1);
+  DB.scanCount++;document.getElementById("scan-cnt").textContent="Scanned: "+DB.scanCount+" operations";
+  showCard(p,1);
+}
+
+function showCard(p,qty){
+  var skuHtml        = p.sku         ? "<div class='sc-info-item'><div class='scan-field-lbl'>SKU</div><div class='sc-info-val badge-blue-val'>"+x(p.sku)+"</div></div>" : "";
+  var colorHtml      = p.vendorColor ? "<div class='sc-info-item'><div class='scan-field-lbl'>VENDOR COLOR</div><div class='sc-info-val badge-purple-val'>"+x(p.vendorColor)+"</div></div>" : "";
+  var seasonHtml     = p.season      ? "<div class='sc-info-item'><div class='scan-field-lbl'>SEASON</div><div class='sc-info-val badge-orange-val'>"+x(p.season)+"</div></div>" : "";
+  var supplierHtml   = p.supplier    ? "<div class='sc-info-item'><div class='scan-field-lbl'>SUPPLIER</div><div class='sc-info-val'>"+x(p.supplier)+"</div></div>" : "";
+  var extraGrid      = (skuHtml||colorHtml||seasonHtml||supplierHtml)
+    ? "<div class='sc-info-grid'>"+skuHtml+colorHtml+seasonHtml+supplierHtml+"</div>" : "";
+
+  document.getElementById("scan-result").innerHTML=
+    "<div class='scan-card'>"
+    +"<div class='scan-card-header'>"
+    +"<div class='scan-check'>✅</div>"
+    +"<div class='scan-added'>Added +"+qty+"</div>"
+    +"<div class='scan-total'>Total: <strong>"+x(p.actualInventory)+"</strong></div>"
+    +"</div>"
+    +"<div class='scan-card-body'>"
+    // code + price in one row
+    +"<div class='sc-top-row'>"
+    +"<div><div class='scan-field-lbl'>CODE</div><div class='scan-field-code'>"+x(p.code)+"</div></div>"
+    +(p.price?"<div style='text-align:right'><div class='scan-field-lbl'>PRICE</div><div class='scan-field-price'>"+x(p.price)+" EGP</div></div>":"")
+    +"</div>"
+    // name
+    +"<div class='sc-row'><div class='scan-field-lbl'>PRODUCT NAME</div><div class='scan-field-name'>"+x(p.name)+"</div></div>"
+    // extra grid
+    +extraGrid
+    +"</div>"
+    +"</div>";
+
+  document.getElementById("scan-empty").style.display="none";
+  setTimeout(function(){document.getElementById("scan-inp").focus();},50);
+}
+
+function clearScan(){document.getElementById("scan-result").innerHTML="";document.getElementById("scan-empty").style.display="";document.getElementById("scan-inp").focus();}
+
+function renderMaster(){
+  var q=document.getElementById("msr-inp").value.toLowerCase();
+  mF=[];for(var i=0;i<DB.products.length;i++){var p=DB.products[i];if(!q||(p.code||"").toLowerCase().indexOf(q)>-1||(p.name||"").toLowerCase().indexOf(q)>-1||(p.supplier||"").toLowerCase().indexOf(q)>-1)mF.push(p);}
+  document.getElementById("msr-foot").textContent="Total: "+DB.products.length.toLocaleString()+" | Showing: "+mF.length.toLocaleString();
+  var sc=document.getElementById("msr-scroll");sc.onscroll=function(){drawM(Math.floor(sc.scrollTop/ROW_H));};drawM(0);sc.scrollTop=0;
+}
+
+function drawM(s){
+  var t=mF.length,e=Math.min(s+VISIBLE+5,t),tp=s*ROW_H,bp=Math.max(0,(t-e)*ROW_H);
+  var h="<tr class='vsp'><td colspan='9' style='height:"+tp+"px'></td></tr>";
+  for(var j=s;j<e;j++){var r=mF[j];h+="<tr><td>"+x(r.code)+"</td><td>"+x(r.sku||"")+"</td><td>"+x(r.name)+"</td><td>"+x(r.vendorColor||"")+"</td><td>"+x(r.season||"")+"</td><td>"+x(r.supplier)+"</td><td>"+x(r.price)+"</td><td>"+x(r.bookBalance)+"</td><td class='"+(r.actualInventory?"af":"ae")+"'>"+(r.actualInventory||"&mdash;")+"</td></tr>";}
+  h+="<tr class='vsp'><td colspan='9' style='height:"+bp+"px'></td></tr>";
+  document.getElementById("msr-body").innerHTML=h;
+}
+
+function renderReport(){
+  var q=document.getElementById("rpt-inp").value.toLowerCase();
+  rF=[];var done=0,tq=0,tb=0,td=0;
+  for(var i=0;i<DB.products.length;i++){
+    var p=DB.products[i];var bk=Number(p.bookBalance)||0;tb+=bk;
+    if(p.actualInventory!==""){done++;var ac=Number(p.actualInventory)||0;tq+=ac;td+=(ac-bk);}
+    if(!q||(p.code||"").toLowerCase().indexOf(q)>-1||(p.name||"").toLowerCase().indexOf(q)>-1)rF.push(p);
+  }
+  document.getElementById("st-total").textContent=DB.products.length.toLocaleString();
+  document.getElementById("st-done").textContent=done.toLocaleString();
+  document.getElementById("st-rem").textContent=(DB.products.length-done).toLocaleString();
+  document.getElementById("st-qty").textContent=tq.toLocaleString();
+  document.getElementById("st-book").textContent=tb.toLocaleString();
+  var de=document.getElementById("st-diff");de.textContent=(td>0?"+":"")+td.toLocaleString();de.style.color=td>0?"var(--green)":td<0?"var(--red)":"#888";
+  var sc=document.getElementById("rpt-scroll");sc.onscroll=function(){drawR(Math.floor(sc.scrollTop/ROW_H));};drawR(0);sc.scrollTop=0;
+}
+
+function drawR(s){
+  var t=rF.length,e=Math.min(s+VISIBLE+5,t),tp=s*ROW_H,bp=Math.max(0,(t-e)*ROW_H);
+  var h="<tr class='vsp'><td colspan='10' style='height:"+tp+"px'></td></tr>";
+  for(var j=s;j<e;j++){
+    var r=rF[j];var diff=(r.actualInventory&&r.bookBalance)?Number(r.actualInventory)-Number(r.bookBalance):null;
+    var ds=diff===null?"&mdash;":(diff>0?"+":"")+diff;var dc=diff===null?"":(diff<0?"dn":diff>0?"dp":"");
+    h+="<tr><td>"+x(r.code)+"</td><td>"+x(r.sku||"")+"</td><td>"+x(r.name)+"</td><td>"+x(r.vendorColor||"")+"</td><td>"+x(r.season||"")+"</td><td>"+x(r.supplier)+"</td><td>"+x(r.price)+"</td><td>"+x(r.bookBalance)+"</td>"
+      +"<td style='font-weight:800;color:var(--blue)'>"+(r.actualInventory||"&mdash;")+"</td><td class='"+dc+"'>"+ds+"</td></tr>";
+  }
+  h+="<tr class='vsp'><td colspan='10' style='height:"+bp+"px'></td></tr>";
+  document.getElementById("rpt-body").innerHTML=h;
+}
+
+function exportExcel(){
+  var data=[];
+  for(var i=0;i<DB.products.length;i++){
+    var p=DB.products[i];
+    var diff=(p.actualInventory&&p.bookBalance)?Number(p.actualInventory)-Number(p.bookBalance):"";
+    var row={"Code":p.code,"SKU":p.sku||"","Product Name":p.name,"Vendor Color":p.vendorColor||"","Season":p.season||"","Supplier":p.supplier,"Price":p.price,"Book Balance":p.bookBalance,"Actual Inventory":p.actualInventory,"Difference":diff};
+    for(var h=1;h<=8;h++){var hk="dokki-hand"+h;row["Dokki-Hand"+h]=p[hk]||"";}
+    data.push(row);
+  }
+  if(!data.length){alert("No data");return;}
+  var ws=XLSX.utils.json_to_sheet(data);var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Report");
+  XLSX.writeFile(wb,BRAND.name+"_Inventory.xlsx");
+}
+  if(!data.length){alert("No data");return;}
+  var ws=XLSX.utils.json_to_sheet(data);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Report");XLSX.writeFile(wb,BRAND.name+"_Inventory.xlsx");
+}
+
+function handleImport(input){
+  var file=input.files[0];if(!file)return;
+  var st=document.getElementById("imp-st");st.textContent="Importing...";st.className="";
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:"binary"});var ws=wb.Sheets[wb.SheetNames[0]];var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      if(rows.length>0){
+        var keys=Object.keys(rows[0]);
+        console.log("COLUMNS:",JSON.stringify(keys));
+        alert("Columns found:\n"+keys.join("\n"));
+      }
+      var mapped=[],seen={},dupes=0;
+      for(var i=0;i<rows.length;i++){var r=rows[i];var code=String(r["Code"]||r["code"]||"").trim();if(!code)continue;if(seen[code]){dupes++;continue;}seen[code]=true;      mapped.push({
+        code: code,
+        name: String(r["Product Name"]||r["name"]||"").trim(),
+        sku: String(r["Sku"]||r["SKU"]||r["sku"]||r[" Sku"]||r[" SKU"]||"").trim(),
+        vendorColor: String(r["Vendor Color"]||r["vendorColor"]||r["vendor color"]||"").trim(),
+        season: String(r["Season"]||r["season"]||"").trim(),
+        supplier: String(r["Supplier"]||r["supplier"]||"").trim(),
+        price: (function(){
+          var keys=[" Price","Price","price"," price","PRICE"];
+          for(var ki=0;ki<keys.length;ki++){
+            var v=r[keys[ki]];
+            if(v!==undefined&&v!==null&&v!==""){return String(v).trim();}
+          }
+          return "";
+        })(),
+        bookBalance: String(r["Book Balance"]||r["bookBalance"]||"").trim(),
+        actualInventory: String(r["Actual Inventory"]||r["actualInventory"]||"").trim()
+      });}
+      DB.products=mapped;DB.scanCount=0;clearScan();document.getElementById("scan-cnt").textContent="Scanned: 0 items";
+      var msg="✓ Imported "+mapped.length.toLocaleString()+" products";if(dupes>0)msg+=" ("+dupes+" duplicates removed)";
+      st.textContent=msg;st.className="sok";renderMaster();renderReport();
+    }catch(err){st.textContent="Error: "+err.message;st.className="serr";}
+    input.value="";
+  };
+  reader.readAsBinaryString(file);
+}
+
+window.onload=function(){
+  document.getElementById("act-btn").onclick=doActivate;
+  document.getElementById("act-inp").onkeydown=function(e){if(e.key==="Enter")doActivate();};
+  document.getElementById("login-btn").onclick=doLogin;
+  document.getElementById("inp-u").onkeydown=function(e){if(e.key==="Enter")doLogin();};
+  document.getElementById("inp-p").onkeydown=function(e){if(e.key==="Enter")doLogin();};
+  document.getElementById("logout-btn").onclick=doLogout;
+  document.getElementById("scan-btn").onclick=doScan;
+  document.getElementById("scan-inp").onkeydown=function(e){if(e.key==="Enter")doScan();};
+  document.getElementById("srch-btn").onclick=toggleSearch;
+  document.getElementById("srch-inp").oninput=renderSearch;
+  document.getElementById("man-ok").onclick=confirmManual;
+  document.getElementById("man-cancel").onclick=cancelManual;
+  document.getElementById("man-qty").onkeydown=function(e){if(e.key==="Enter")confirmManual();};
+  document.getElementById("msr-inp").oninput=renderMaster;
+  document.getElementById("imp-btn").onclick=function(){document.getElementById("imp-file").click();};
+  document.getElementById("imp-file").onchange=function(){handleImport(this);};
+  document.getElementById("rpt-inp").oninput=renderReport;
+  document.getElementById("exp-btn").onclick=exportExcel;
+  document.getElementById("nu-add").onclick=addUser;
+  document.getElementById("br-save").onclick=function(){
+    BRAND.name=document.getElementById("br-name").value.trim()||"OurKids";
+    BRAND.sub=document.getElementById("br-sub").value.trim()||"Branch Inventory";
+    applyBrand();this.textContent="✓ Saved!";var me=this;setTimeout(function(){me.textContent="💾 Save";},2000);
+  };
+  document.getElementById("logo-file").onchange=function(){
+    var f=this.files[0];if(!f)return;var reader=new FileReader();reader.onload=function(e){BRAND.logo=e.target.result;applyBrand();};reader.readAsDataURL(f);
+  };
+  document.getElementById("logo-reset").onclick=function(){BRAND.logo=null;applyBrand();};
+  document.getElementById("reset-btn").onclick=function(){
+    if(!confirm("Reset ALL inventory counts?"))return;
+    for(var i=0;i<DB.products.length;i++)DB.products[i].actualInventory="";
+    DB.scanCount=0;clearScan();document.getElementById("scan-cnt").textContent="Scanned: 0 items";
+    alert("Done!");
+  };
+  setRole("scanner");applyBrand();
+  if(sessionStorage.getItem("ok_act")==="1"){showPage("login");setTimeout(function(){document.getElementById("inp-u").focus();},100);}
+  else{showPage("login");setTimeout(function(){document.getElementById("inp-u").focus();},100);}
+};
+</script>
+</body>
+</html>
